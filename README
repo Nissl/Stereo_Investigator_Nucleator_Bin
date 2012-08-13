@@ -1,0 +1,49 @@
+This Python script produces binned nucleator data from Stereo Investigator outputs.
+You can select any number of markers, any bin sizes, and any inquiry length you want.
+You can investigate either area or volume.
+The output is in .xls format. 
+The comment sections below cover Python setup, file preparation, and variable sets.
+
+##################################################################
+Section 1: setting up your computer to run this program
+This program is written in Python 2.7. It also uses the xlwt addon library to make Excel spreadsheets.
+
+Step 1: Install Python 2.7.3 from here: http://www.python.org/download/releases/2.7.3/
+On the page, select the Windows MSI installer (x86 if you have 32-bit Windows installed,
+x86-64 if you have 64-bit Windows installed.)
+I suggest using the default option, which will install Python to c:/Python27
+
+Step 2: Install the xlwt library from here: http://pypi.python.org/pypi/xlwt/
+Use the program WinRAR to unzip the files to a directory
+Go to "run" in the start menu and type cmd
+Type cd c:\directory_where_xlwt_was_unzipped_to
+Type setup.py install
+
+Step 3: Copy this program into the c:/Python27 directory
+You can also put it into another directory that is added to the correct PATH.
+
+##################################################################
+Section 2: file preparation for this program
+
+Step 1: Create input files
+Stereo Investigator doesn't mark nucleator data by region, but you can sort by modified 
+Select all of the nucleator data for a region in the "display probe run list"
+For each of your markers, highlight the marker, select "copy to clipboard"
+Paste the data into an Excel spreadsheet. 
+Save the spreadsheet a as tab delimited .txt file
+Save the file using the naming convention "casename region celltype.txt"
+If you have multiple runs to track (e.g., for reliability) save as "casename run region celltype.txt"
+(Don't mess around with the headers, this program expects default Stereo Investigator output)
+
+Step 2 (Optional):
+This program can return either raw binned data, or data corrected by estimated cell number
+To correct data by cell number, create an excel file with the format:
+Column 1: Case
+Column 2: Run number (or leave blank)
+Column 3: Region name
+Column 4: Cell marker name
+Column 5: Number of cells
+
+Save the file as a tab-delimited text file.
+
+##################################################################
