@@ -93,7 +93,7 @@ number_file = "Nissl pilot raw numbers"
 ##############################################################################
 # program begins here
 
-# Import modules to handle tab-delimited text file input and output
+# Import module to handle tab-delimited text file
 import csv
 
 
