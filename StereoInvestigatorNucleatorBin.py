@@ -26,65 +26,54 @@
 # by modified. Select all of the nucleator data for a region in the "display 
 # probe run list". For each of your markers, highlight the marker, select 
 # "copy to clipboard." Paste the data into an Excel spreadsheet. Save the 
-# spreadsheet a as tab delimited .txt file. Save the file using the naming 
-# convention "casename region celltype.txt". If you have multiple runs to 
-# track (e.g., for reliability) save as "casename run region celltype.txt"
-# (Don't mess around with the headers, this program expects default Stereo 
-# Investigator output)
+# spreadsheet as a tab delimited .txt file. Leave one line of headers.
+
+# Alternately, choose the "export to Excel" option, open the raw nucleator 
+# data, and delete any rows with average calculations. Delete all tabs other 
+# than the one containing the raw data. Save the spreadsheet as a tab delimited
+# .txt file. Caution: the export function is extremely slow in current 
+# versions of Stereo Investigator.
 
 # Optional:
 # This program can return either raw binned data, or data corrected by 
 # estimated cell number.
 # To correct data by cell number, create an excel file with the format:
-# Column 1: Case
-# Column 2: Run number (or leave blank)
-# Column 3: Region name
-# Column 4: Cell marker name
-# Column 5: Number of cells
+# Column 1: Case: use the same names as in the case list.
+# Column 2: Cell marker name
+# Column 3: Number of cells
 # Save as a tab-delimited text file.
 
 ##############################################################################
 # Section 3: set your parameters for this program
 
 # The directory where your saved .txt files are stored
-directory = r"C:\Documents and Settings\Administrator\Desktop\Nucleator Outputs"
+directory = r"C:\Documents and Settings\Administrator\My Documents"
 
 # The names of each case you want to look at
-caselist = ["Case B", "Case X"]
-
-# Run name, you can set this to "" if you have a single run per case
-runs = ["Nuc 2"]
-
-# Regions you're examining
-regions = ["Acc Basal", "Amyg Other", "Basal", "Central", "Lateral"]
-
-# Glial types you're counting, as filenames
-celltypes = ["Astrocyte", "Endothelial", "Oligodendrocyte"]
-
-# Marker names in file
-markertypes = ["AstroMicro", "Endothelial", "Marker 2"]
+case_list = ["John H13-01 glia reliability 1", 
+            "John H13-01 glia reliability 2"]
 
 # Set whether you want to bin "Area" or "Volume"
-datatype = "Volume"
+data_type = "Volume"
 
 # Binning parameters here
-# Set the binsize:
-binsize = 10
+# Set the bin_size:
+bin_size = 10
 
 # Set the starting distance:
-binmin = 0
+bin_min = 0
 
 # Set the maximum distance:
-binmax = 2000
+bin_max = 2000
 
 # Set your output filename
-output_file = r"Format test compare CSV 3.txt"
+output_file = r"John reliability test 2 number.txt"
 
 # If you want to correct by cell number, put the cell number file name here.
 # The file should be in the same directory as your raw nucleator files and 
 # saved as a text file. If you *don't* want to correct by stereologically 
 # estimated cell number, input ""
-number_file = "Nissl pilot raw numbers"
+number_file = "Glia reliability number data"
 
 ##############################################################################
 # Section 4: save and run the program!
@@ -97,221 +86,151 @@ number_file = "Nissl pilot raw numbers"
 import csv
 
 
-def nucleatordata():
-    """This opens each nucleator file and creates a list, nucleatordata,
+def nucleator_data(case_list):
+    """This opens each nucleator file and creates a list, nuc_data,
     with all nucleator data"""
-    nucleatordata = []
-    linetracker = 1
-    for case in caselist:
-        for run in runs:
-            for region in regions:
-                for celltype in celltypes:
-                    if run == "":
-                        nextfile = (case + " " + region + " " + celltype +
-                                    ".txt")
-                    else:
-                        nextfile = (case + " " + run + " " + region + " " + 
-                                    celltype + ".txt")
-                    path = directory + "\\" + nextfile
-                    myfileobj = open(path, "r") 
-                    csv_read = csv.reader(myfileobj, dialect=csv.excel_tab)
-                    newinput = []
-                    for line in csv_read:
-                        newinput.append(line[0:8])
-                    newinput = newinput[1:-6]
-                    linenumber = 0
-                    for line in newinput:
-                        addline = [case, run, region, newinput[linenumber][0],
-                                   newinput[linenumber][1], 
-                                   newinput[linenumber][2],
-                                   newinput[linenumber][3]] 
-                        nucleatordata.append(addline)
-                        linenumber += 1
-                        linetracker += 1
-    return nucleatordata
-
-
-def numberdata():
-    """This opens the number file and gets it loaded into list numberdata if 
-    you want to correct for raw numbers"""
-    if len(number_file) > 0:
-        numberdata = []
-        path=directory + '/' + number_file + ".txt"
+    nuc_data = [["Run", "Cell Type", "Area (um^2)", "Volume (um^3)", 
+                     "Length (um)"]]
+    for case in case_list:
+        nextfile = (case + ".txt")
+        path = directory + "\\" + nextfile
         myfileobj = open(path, "r") 
         csv_read = csv.reader(myfileobj, dialect=csv.excel_tab)
+        raw_data = []
         for line in csv_read:
-            numberdata.append(line[0:5])
-        numberdata = numberdata[1:]
-        return numberdata
+            raw_data.append(line[0:4])
+        raw_data = raw_data[1:]
+        linenumber = 0
+        for _ in raw_data:
+            addline = [case, raw_data[linenumber][0],
+                       raw_data[linenumber][1], 
+                       raw_data[linenumber][2],
+                       raw_data[linenumber][3]] 
+            nuc_data.append(addline)
+            linenumber += 1
+    return nuc_data
+
+
+def celltypes(nuc_data):
+    cell_type_list = []
+    for cell in nuc_data:
+        if cell[1] not in cell_type_list and cell[1] != "Cell Type":
+            cell_type_list.append(cell[1])
+    return cell_type_list
+
+
+def number_data():
+    """This opens the number file and gets it loaded into list number_data if 
+    you want to correct for raw numbers"""
+    number_data = []
+    path=directory + '/' + number_file + ".txt"
+    myfileobj = open(path, "r") 
+    csv_read = csv.reader(myfileobj, dialect=csv.excel_tab)
+    for line in csv_read:
+        number_data.append(line[0:5])
+    number_data = number_data[1:]
+    return number_data
 
                  
-def bins(nucleatordata, case, celltype, region, binsize, binmin, binmax):
+def bins(nuc_data, case, cell_type, data_type, bin_size, bin_min, bin_max):
     """the binning algorithm for an individual case and celltype"""
-    binlist = [0] * ((binmax - binmin) / binsize)
+    bin_list = [0] * ((bin_max - bin_min) / bin_size)
     # fill bins with data
-    for cell in nucleatordata:
+    for cell in nuc_data:
         if cell[0] == case:
-            if cell[3] == celltype:
-                if cell[2] == region:
-                    try:
-                        binselect = int(float(cell[datatype]) / 
-                                        binsize - binmin)
-                        binlist[binselect] = binlist[binselect] + 1
-                    except:
-                        pass
-    return binlist
-
-
-def bins_nocelltype(nucleatordata, case, region, binsize, binmin, binmax):
-    binlist = [0] * ((binmax - binmin) / binsize)
-    for cell in nucleatordata:
-        if cell[0] == case:
-            if cell[2] == region:
+            if cell[1] == cell_type:
                 try:
-                    binselect = int(float(cell[datatype])/binsize - binmin)
-                    binlist[binselect] = binlist[binselect]+1
+                    binselect = int(float(cell[data_type]) / 
+                                    bin_size - bin_min)
+                    bin_list[binselect] = bin_list[binselect] + 1
                 except:
                     pass
-    return binlist
+    return bin_list
 
 
-def bintotal(binoutput):
-    """calculate the total number of nucleator marked cells for a cell type"""
-    nuccellnumber = 0
-    binnumber = len(binoutput)
-    bintracker = 0
-    while bintracker < binnumber:
-        nuccellnumber = nuccellnumber + binoutput[bintracker]
-        bintracker = bintracker + 1
-    return nuccellnumber
+def bintotal(bin_output):
+    """Calculate the total number of nucleator marked cells for a cell type."""
+    nuc_cell_num = 0
+    bin_num = len(bin_output)
+    bin_tracker = 0
+    while bin_tracker < bin_num:
+        nuc_cell_num = nuc_cell_num + bin_output[bin_tracker]
+        bin_tracker += 1
+    return nuc_cell_num
 
 
-def numcorrect(case, celltype, region, binoutput, nuccellnumber, numberdata):
-    """divide number of calculated cells by number of nucleator cells to get 
-    correction"""
-    numcorrect = 0
-    for row in numberdata:
-        if row[0] == case:
-            if row[3] == celltype:
-                if row[2] == region:
-                    numcorrect = float(row[4]) / float(nuccellnumber)
-    return numcorrect
+def num_correct(case, cell_type, bin_output, nuc_cell_num, number_data):
+    """Divide the number of calculated cells by number of nucleator cells to 
+    get a correction factor"""
+    num_correct = 0
+    for row in number_data:
+        if row[0] == case and row[1] == cell_type:
+            num_correct = float(row[2]) / float(nuc_cell_num)
+    return num_correct
 
 
-def numcorrect_nocelltype(case, region, binoutput, nuccellnumber, numberdata):
-    """the same numcorrect except that all cell types are merged together"""
-    numcorrect = 0
-    for row in numberdata:
-        if row[0] == case:
-            if row[2] == region:
-                if row[3] == "All":
-                    numcorrect = float(row[4]) / float(nuccellnumber)
-    return numcorrect
+def bin_correct(bin_output, correction):
+    """Apply the number correction factor by bin."""
+    bin_track = 0
+    while bin_track < len(bin_output):
+        bin_output[bin_track] = int(bin_output[bin_track] * correction)
+        bin_track += 1
+    return bin_output
 
 
-def bincorrect(binoutput, correction):
-    """apply the number correction factor by bin"""
-    bintrack = 0
-    while bintrack < len(binoutput):
-        binoutput[bintrack] = int(binoutput[bintrack] * correction)
-        bintrack += 1
-    return binoutput
+##############################################################################
+# Convert data type into location value.
+if data_type == "Area": data_type = 2
+if data_type == "Volume": data_type = 3
 
-
-def amygregionsum(case, celltype, binoutputcorrect, wholeamyg):
-    """summation program for whole amygdala"""
-    bintrack = 0
-    while bintrack < len(binoutput):
-        wholeamyg[bintrack] = wholeamyg[bintrack] + binoutputcorrect[bintrack]
-        bintrack += 1
-    return wholeamyg
-
-
-def wholecasesum(case, wholeamyg, wholecase):
-    bintrack = 0
-    while bintrack < len(binoutput):
-        wholecase[bintrack] = wholecase[bintrack] + wholeamyg[bintrack]
-        bintrack += 1
-    return wholecase
-
-
-# prep file to write data into
+# Create file to write data into.
 out_path = directory + "\\" + output_file
 output_writer = csv.writer(open(out_path, 'w'), delimiter='\t', quotechar='|',
                            quoting=csv.QUOTE_MINIMAL)
 
-# convert data type into values
-if datatype == "Area":
-    datatype = 4
-if datatype == "Volume":
-    datatype = 5
-
-# generate list headers,first row, bin is "x and smaller"
-bintrack = binsize
-header_row = ["Case", "Cell Type", "Region"]
-while bintrack < binmax:
-    header_row.append(str(bintrack) + " um")
-    bintrack = bintrack + binsize
+# Generate file headers and place them in the first row. Bins are "x and 
+# smaller"
+bin_track = bin_size
+header_row = ["Case", "Cell Type"]
+while bin_track <= bin_max:
+    header_row.append(str(bin_track) + " um")
+    bin_track = bin_track + bin_size
 output_writer.writerow(header_row)
 
-# fill in the sheet with each output, starting in the second row for headers
-analysistrack = 1
-nucleatordata = nucleatordata()
-numberdata = numberdata()
-for case in caselist:
-    wholecase = [0] * ((binmax - binmin) / binsize)
-    for celltype in markertypes:
-        wholeamyg = [0] * ((binmax - binmin) / binsize)
-        for region in regions:
-            region_row = [case, celltype, region]        
-            binoutput = bins(nucleatordata, case, celltype, region, binsize, 
-                             binmin, binmax)
-            nuccellnumber = bintotal(binoutput)
-            if len(number_file) > 0:
-                correction = numcorrect(case, celltype, region, binoutput, 
-                                        nuccellnumber, numberdata)
-                binoutputcorrect = bincorrect(binoutput,correction)      
-            else:
-                binoutputcorrect = binoutput
-            wholeamyg = amygregionsum(case, celltype, binoutputcorrect, 
-                                      wholeamyg)
-            bintrack = 0
-            while bintrack < (binmax - binsize):
-                region_row.append(binoutputcorrect[bintrack / binsize])
-                bintrack = bintrack + binsize                
-            output_writer.writerow(region_row)
-        #  tack on the whole amygdala summation
-        wholeamy_row = [case, celltype, "Whole"]
-        bintrack = 0
-        while bintrack < (binmax - binsize):
-            wholeamy_row.append(wholeamyg[bintrack / binsize])
-            bintrack = bintrack + binsize
-        wholecase = wholecasesum(case, wholeamyg, wholecase)
-        output_writer.writerow(wholeamy_row)
-    # tack on a whole case summation
-    all_whole_row = [case, "All", "Whole"]
-    bintrack = 0
-    while bintrack < (binmax - binsize):
-        all_whole_row.append(wholecase[bintrack / binsize])
-        bintrack = bintrack + binsize
-    output_writer.writerow(all_whole_row) 
+nuc_data = nucleator_data(case_list)
+cell_type_list = celltypes(nuc_data)
 
-# do an all cell analysis by region
-for case in caselist:
-    for region in regions:
-        binoutput = bins_nocelltype(nucleatordata, case, region, binsize, 
-                                    binmin, binmax)
-        nuccellnumber = bintotal(binoutput)
-        if len(number_file) > 0:
-            correction = numcorrect_nocelltype(case, region, binoutput, 
-                                               nuccellnumber, numberdata)
-            binoutputcorrect = bincorrect(binoutput, correction)
+if number_file:
+    number_data = number_data()
+
+# Fill in the sheet with each output, starting in the second row for headers. 
+for case in case_list:
+    cell_sum = [0] * ((bin_max - bin_min) / bin_size)
+    for cell_type in cell_type_list:    
+        bin_output = bins(nuc_data, case, cell_type, data_type, bin_size, 
+                          bin_min, bin_max)
+        
+        if number_file:
+            nuc_cell_num = bintotal(bin_output)
+            correction = num_correct(case, cell_type, bin_output, 
+                                    nuc_cell_num, number_data)
+            bin_out_corr = bin_correct(bin_output, correction)      
         else:
-            binoutputcorrect = binoutput
-        all_reg_row = [case, "All", region]
-        bintrack = 0
-        while bintrack < (binmax - binsize):
-            all_reg_row.append(binoutputcorrect[bintrack / binsize])
-            bintrack = bintrack + binsize                
-        output_writer.writerow(all_reg_row) 
-
+            bin_out_corr = bin_output
+        
+        # Write row for indvidual cell type    
+        bin_track = 0
+        cell_row = [case, cell_type]
+        for nuc_bin in bin_out_corr:
+            cell_row.append(nuc_bin)
+            cell_sum[bin_track] = cell_sum[bin_track] + nuc_bin 
+            bin_track += 1
+        output_writer.writerow(cell_row)
+    
+    # Write row for all cell types within a case    
+    case_output = [case, "All"]
+    for nuc_bin in cell_sum:
+        case_output.append(nuc_bin)
+    output_writer.writerow(case_output)
+    
+print "Done"
