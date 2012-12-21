@@ -50,8 +50,12 @@
 directory = r"C:\Documents and Settings\Administrator\My Documents"
 
 # The names of each case you want to look at
-case_list = ["John H13-01 glia reliability 1", 
-            "John H13-01 glia reliability 2"]
+case_list = ["Nucleator Case A reliability 1 12-21-12", 
+            "Nucleator Case A reliability 2 12-21-12",
+            "Nucleator Case A reliability 3 12-21-12"]
+
+# Multiple markers?
+multiple_marks = True
 
 # Set whether you want to bin "Area" or "Volume"
 data_type = "Volume"
@@ -67,13 +71,13 @@ bin_min = 0
 bin_max = 2000
 
 # Set your output filename
-output_file = r"John reliability test 2 number.txt"
+output_file = r"Nucleator oligo-astro reliability bin10.txt"
 
 # If you want to correct by cell number, put the cell number file name here.
 # The file should be in the same directory as your raw nucleator files and 
 # saved as a text file. If you *don't* want to correct by stereologically 
 # estimated cell number, input ""
-number_file = "Glia reliability number data"
+number_file = ""
 
 ##############################################################################
 # Section 4: save and run the program!
@@ -97,24 +101,41 @@ def nucleator_data(case_list):
         myfileobj = open(path, "r") 
         csv_read = csv.reader(myfileobj, dialect=csv.excel_tab)
         raw_data = []
-        for line in csv_read:
-            raw_data.append(line[0:4])
-        raw_data = raw_data[1:]
-        linenumber = 0
-        for _ in raw_data:
-            addline = [case, raw_data[linenumber][0],
-                       raw_data[linenumber][1], 
-                       raw_data[linenumber][2],
-                       raw_data[linenumber][3]] 
-            nuc_data.append(addline)
-            linenumber += 1
+        if not multiple_marks:
+            for line in csv_read:
+                raw_data.append(line[0:4])
+            raw_data = raw_data[1:]
+            linenumber = 0
+            for _ in raw_data:
+                addline = [case, raw_data[linenumber][0],
+                           raw_data[linenumber][1], 
+                           raw_data[linenumber][2],
+                           raw_data[linenumber][3]] 
+                nuc_data.append(addline)
+                linenumber += 1
+        if multiple_marks: 
+            for line in csv_read:
+                raw_data.append(line[0:7])
+            raw_data = raw_data[1:]
+            linenumber = 0
+            for _ in raw_data:
+                addline = [case, raw_data[linenumber][0],
+                           raw_data[linenumber][1], 
+                           raw_data[linenumber][2],
+                           raw_data[linenumber][3], 
+                           raw_data[linenumber][4],
+                           raw_data[linenumber][5],
+                           raw_data[linenumber][6]] 
+                nuc_data.append(addline)
+                linenumber += 1
     return nuc_data
 
 
 def celltypes(nuc_data):
     cell_type_list = []
     for cell in nuc_data:
-        if cell[1] not in cell_type_list and cell[1] != "Cell Type":
+        if (cell[1] not in cell_type_list and cell[1] != "Cell Type" and 
+            cell[1] != " "):
             cell_type_list.append(cell[1])
     return cell_type_list
 
@@ -180,8 +201,12 @@ def bin_correct(bin_output, correction):
 
 ##############################################################################
 # Convert data type into location value.
-if data_type == "Area": data_type = 2
-if data_type == "Volume": data_type = 3
+if multiple_marks:
+    if data_type == "Area": data_type = 2
+    if data_type == "Volume": data_type = 5
+if not multiple_marks:
+    if data_type == "Area": data_type = 2
+    if data_type == "Volume": data_type = 3
 
 # Create file to write data into.
 out_path = directory + "\\" + output_file
